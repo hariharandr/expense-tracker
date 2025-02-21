@@ -61,24 +61,29 @@ test('user cannot create an expense without amount', function () {
 });
 
 test('user can update an expense', function () {
-    $expense = Expense::factory()->create();
+    $category = Category::factory()->create(['user_id' => $this->user->id]);
+    $expense = Expense::factory()->create(['user_id' => $this->user->id, 'category_id' => $category->id]);
+
     $updatedData = [
         'amount' => 1500,
         'description' => 'Updated Expense',
+        'category_id' => $category->id,
+        'expense_date' => '2025-02-22',
     ];
 
     $response = $this->actingAs($this->user)
-        ->put('/api/expenses/' . $expense->id, $updatedData);
+        ->putJson('/api/expenses/' . $expense->id, $updatedData);
 
     $response->assertStatus(200);
-    $response->assertJsonFragment($updatedData);
+    $response->assertJsonFragment(['amount' => 1500, 'description' => 'Updated Expense']);
 });
 
 test('user can delete an expense', function () {
-    $expense = Expense::factory()->create();
+    $category = Category::factory()->create(['user_id' => $this->user->id]);
+    $expense = Expense::factory()->create(['user_id' => $this->user->id, 'category_id' => $category->id]);
 
     $response = $this->actingAs($this->user)
-        ->delete('/api/expenses/' . $expense->id, []);
+        ->deleteJson('/api/expenses/' . $expense->id);
 
     $response->assertStatus(204);
     $this->assertDatabaseMissing('expenses', ['id' => $expense->id]);

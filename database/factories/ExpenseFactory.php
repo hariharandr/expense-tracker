@@ -2,32 +2,28 @@
 
 namespace Database\Factories;
 
-use App\Models\Expense;
 use App\Models\Category;
+use App\Models\User; // Import
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Expense>
+ */
 class ExpenseFactory extends Factory
 {
-    protected $model = Expense::class;
-
     /**
      * Define the model's default state.
      *
-     * @return array
+     * @return array<string, mixed>
      */
-    public function definition()
+    public function definition(): array
     {
-        // create one category if it doesn't exist
-        if (!Category::count()) {
-            Category::factory()->create();
-        }
-
         return [
-            'amount' => $this->faker->numberBetween(100, 5000),
-            'description' => $this->faker->sentence(),
-            'category_id' => Category::factory(),
-            'user_id' => \App\Models\User::factory(),
+            'amount' => $this->faker->numberBetween(10, 1000),
+            'description' => $this->faker->sentence,
             'expense_date' => $this->faker->date(),
+            'user_id' => User::factory(), // CRUCIAL
+            'category_id' => Category::factory(), 
         ];
     }
 }
