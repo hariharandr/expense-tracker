@@ -102,4 +102,19 @@ php artisan pest:install
 - to go inside contianer :
 ./vendor/bin/sail shell
 
+- creating models & migrate:
+./vendor/bin/sail artisan make:migration create_categories_table --create=categories
+./vendor/bin/sail artisan make:migration create_expenses_table --create=expenses
+./vendor/bin/sail artisan migrate
+
+./vendor/bin/sail artisan make:model Category
+./vendor/bin/sail artisan make:model Expense
+
+- Creating controller:
+./vendor/bin/sail artisan make:controller CategoryController
+./vendor/bin/sail artisan make:controller ExpenseController
+
+- installing axios:
+npm install axios
+
 ```
