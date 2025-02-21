@@ -1,13 +1,14 @@
 <?php
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseController;
-use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->group(function () {
-    // Category Routes
-    Route::resource('categories', CategoryController::class);
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
 
-    // Expense Routes
-    Route::resource('expenses', ExpenseController::class);
-});
+
+Route::middleware('auth:sanctum')->post('/expenses', [ExpenseController::class, 'store']);
+Route::middleware('auth:sanctum')->post('/categories', [CategoryController::class, 'store']);
