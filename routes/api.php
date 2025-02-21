@@ -10,5 +10,11 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-Route::middleware('auth:sanctum')->post('/expenses', [ExpenseController::class, 'store']);
-Route::middleware('auth:sanctum')->post('/categories', [CategoryController::class, 'store']);
+Route::middleware('auth:sanctum')->group(function () {
+    // Category Routes
+    Route::resource('categories', CategoryController::class);
+
+    // Expense Routes
+    Route::resource('expenses', ExpenseController::class);
+    Route::get('/expense-summary', [ExpenseController::class, 'getCategorizedSummary']);
+});

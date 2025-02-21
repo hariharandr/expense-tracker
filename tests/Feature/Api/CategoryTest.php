@@ -34,13 +34,13 @@ test('user can fetch categories', function () {
 
 
 test('user cannot create a category without name', function () {
-    $data = []; // No name provided to trigger validation error
+    $data = []; // No 'name' provided
 
-    $response = $this->actingAs($this->user) // Ensure the user is authenticated
-        ->post('/api/categories', $data);
+    $response = $this->actingAs($this->user)
+        ->postJson('/api/categories', $data);
 
-    $response->assertStatus(422); // Expecting a validation error due to missing name
-    $response->assertJsonValidationErrors('name'); // Assert that the 'name' field has a validation error
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors('name');
 });
 
 

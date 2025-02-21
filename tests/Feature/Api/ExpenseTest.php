@@ -46,23 +46,19 @@ test('user can fetch expenses', function () {
 
 
 test('user cannot create an expense without amount', function () {
-    // Create a category to associate with the expense
-    $category = Category::factory()->create();
+    $category = Category::factory()->create(); // Ensure category exists
 
     $data = [
-        'category_id' => $category->id, // Ensure valid category_id
+        'category_id' => $category->id,
         'expense_date' => '2025-02-21',
-        // 'amount' field is deliberately omitted to trigger validation error
     ];
 
-    $response = $this->actingAs($this->user) // Ensure the user is authenticated
-        ->post('/api/expenses', $data);
+    $response = $this->actingAs($this->user)
+        ->postJson('/api/expenses', $data); // Use postJson for JSON requests
 
-    $response->assertStatus(422); // Expecting a validation error
-    $response->assertJsonValidationErrors(['amount']); // Ensure that the 'amount' field is validated
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['amount']);
 });
-
-
 
 test('user can update an expense', function () {
     $expense = Expense::factory()->create();
@@ -86,4 +82,51 @@ test('user can delete an expense', function () {
 
     $response->assertStatus(204);
     $this->assertDatabaseMissing('expenses', ['id' => $expense->id]);
+});
+
+test('user can fetch categorized expense summary', function () {
+    // Create categories and expenses
+    $category1 = Category::factory()->create(['name' => 'Food']);
+    $category2 = Category::factory()->create(['name' => 'Transport']);
+
+    Expense::factory()->create([
+        'user_id' => $this->user->id,
+        'category_id' => $category1->id,
+        'amount' => 100,
+        'expense_date' => now()->toDateString(),
+    ]);
+    Expense::factory()->create([
+        'user_id' => $this->user->id,
+        'category_id' => $category2->id,
+        'amount' => 200,
+        'expense_date' => now()->toDateString(),
+    ]);
+
+    // Make the API request
+    $response = $this->actingAs($this->user)->get('/api/expense-summary?start_date=' . now()->toDateString() . '&end_date=' . now()->toDateString());
+
+    // Assert the response status and structure
+    $response->assertStatus(200)
+        ->assertJsonStructure([
+            '*' => ['category', 'total_amount']
+        ])
+        ->assertJson([
+            ['category' => 'Food', 'total_amount' => 100],
+            ['category' => 'Transport', 'total_amount' => 200],
+        ]);
+});
+
+test('user cannot fetch expense summary without authentication', function () {
+    // Make the API request without authentication
+    $response = $this->getJson('/api/expense-summary?start_date=' . now()->toDateString() . '&end_date=' . now()->toDateString());
+
+    // Assert the response status is 401 (Unauthorized)
+    $response->assertStatus(401);
+});
+
+test('user cannot fetch expense summary with invalid dates', function () {
+    $response = $this->actingAs($this->user)->get('/api/expense-summary?start_date=invalid-date&end_date=invalid-date');
+
+    $response->assertStatus(422)
+        ->assertJsonValidationErrors(['start_date', 'end_date']);
 });
