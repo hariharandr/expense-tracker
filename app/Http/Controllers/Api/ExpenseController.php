@@ -8,14 +8,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Category;
 
 class ExpenseController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
-        return Expense::with('category')->where('user_id', Auth::id())->get();
+        $query = Expense::with('category')->where('user_id', Auth::id());
+
+        // Filter by date if provided
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('expense_date', [$request->start_date, $request->end_date]);
+        }
+
+        return $query->get();
     }
 
     public function store(Request $request)
@@ -42,6 +50,30 @@ class ExpenseController extends Controller
     {
         $this->authorize('view', $expense); // Check if user is authorized to view this expense
         return response()->json($expense);
+    }
+
+    public function edit($id)
+    {
+        try {
+            $expense = Expense::findOrFail($id); // Find the expense (findOrFail is KEY)
+
+            // Authorization Check (HIGHLY RECOMMENDED for security):
+            if ($expense->user_id !== Auth::id()) { // Use Auth facade and check user_id
+                abort(403, 'Unauthorized action.'); // Or redirect, or show a message
+            }
+
+            $categories = Category::all(); // Fetch all categories for the dropdown
+
+            return view('expenses.edit', compact('expense', 'categories')); // Pass both variables!
+            // OR, you can use:
+            // return view('expenses.edit')->with('expense', $expense)->with('categories', $categories);
+
+        } catch (\Exception $e) {
+            // Handle exceptions (log and/or display an error message):
+            // \Log::error($e); // Log the exception for debugging
+            // return redirect()->route('expenses.index')->with('error', 'Expense not found.'); // Example redirect
+            abort(404, 'Expense not found.'); // Or display a 404 page
+        }
     }
 
     public function update(Request $request, Expense $expense)
@@ -104,5 +136,11 @@ class ExpenseController extends Controller
             })->values();
 
         return response()->json($summary);
+    }
+
+    public function add()
+    {
+        // Your logic for displaying the add expense form
+        return view('expenses.add-expense');
     }
 }

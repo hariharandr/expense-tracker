@@ -26,12 +26,12 @@ class CategoryPolicy
         return true; // Any authenticated user can create a category
     }
 
-    public function update(User $user, Category $category): bool
+    public function update(User $user, Category $category)
     {
         return $user->id === $category->user_id;
     }
 
-    public function delete(User $user, Category $category): bool
+    public function delete(User $user, Category $category)
     {
         return $user->id === $category->user_id;
     }

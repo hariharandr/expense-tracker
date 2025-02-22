@@ -20,19 +20,15 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|unique:categories,name',
+        $validator = $request->validate([
+            'name' => 'required|string|max:255',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $category = new Category($request->all());
-        $category->user_id = Auth::id(); // Associate with logged-in user
+        $category = new Category($validator);
+        $category->user_id = Auth::id(); // <-- Crucial: Set the user_id
         $category->save();
 
-        return response()->json($category, 201);
+        return response()->json($category, 201); // 201 Created status code
     }
 
     public function update(Request $request, Category $category)
@@ -46,7 +42,7 @@ class CategoryController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $category->update($request->all());
+        $category->update($request->only('name'));
 
         return response()->json($category);
     }

@@ -9,11 +9,16 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'user_id'];
 
     // Define relationship with Expense
     public function expenses()
     {
         return $this->hasMany(Expense::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

@@ -45,16 +45,23 @@ test('user cannot create a category without name', function () {
 
 
 test('user can update a category', function () {
-    $category = Category::factory()->create();
+    $user = User::factory()->create(); // Create a user
+    $category = Category::factory()->create(['user_id' => $user->id]); // Create a category and assign it to the user
+
     $updatedData = [
         'name' => 'Updated Category Name',
     ];
 
-    $response = $this->actingAs($this->user)
-        ->put('/api/categories/' . $category->id, $updatedData);
+    $response = $this->actingAs($user)->putJson("/api/categories/{$category->id}", $updatedData);
 
-    $response->assertStatus(200);
+    $response->assertStatus(200); // Should be 200 now
     $response->assertJsonFragment($updatedData);
+
+    $this->assertDatabaseHas('categories', [
+        'id' => $category->id,
+        'name' => $updatedData['name'],
+        'user_id' => $user->id, // Important: Check user_id in database
+    ]);
 });
 
 test('user can delete a category', function () {
