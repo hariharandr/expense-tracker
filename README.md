@@ -1,128 +1,250 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Expense Tracker
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This project is an expense tracking application built using Laravel 11, MySQL, Redis, and jQuery. It provides users with a platform to manage their expenses, categorize them, and visualize their spending patterns through charts and detailed tables. This README documents the project setup, development environment, implemented features, and project structure.
 
-## About Laravel
+## Table of Contents
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+-   Introduction
+-   Features
+-   Technologies Used
+-   Development Environment Setup
+-   Project Structure
+-   Usage
+-   API Endpoints
+-   Database Schema
+-   Testing
+-   Future Enhancements
 
--   [Simple, fast routing engine](https://laravel.com/docs/routing).
--   [Powerful dependency injection container](https://laravel.com/docs/container).
--   Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
--   Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
--   Database agnostic [schema migrations](https://laravel.com/docs/migrations).
--   [Robust background job processing](https://laravel.com/docs/queues).
--   [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Introduction
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+This expense tracker aims to simplify personal finance management. Users can easily add, edit, and delete expenses, categorize them for better analysis, and filter expenses by date range and category. The application provides a clear overview of spending through interactive charts and detailed expense lists.
 
-## Learning Laravel
+## Development Environment Setup
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+This project utilizes Laravel Sail for a streamlined development environment using Docker. Follow these steps to set up the project:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+1.  **Install PHP:**
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+    ```bash
+    sudo add-apt-repository ppa:ondrej/php -y
+    sudo apt update
+    sudo apt install php8.2 php8.2-cli php8.2-mbstring php8.2-xml php8.2-curl php8.2-zip php8.2-bcmath php8.2-tokenizer php8.2-mysql -y
+    sudo update-alternatives --set php /usr/bin/php8.2
+    sudo apt install php-intl
+    ```
 
-## Laravel Sponsors
+    Verify PHP installation: `php -v`
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+2.  **Create Laravel Project (using Docker):**
 
-### Premium Partners
+    ```bash
+    docker run --rm -v $(pwd):/app -w /app laravelsail/php82-composer:latest composer create-project --prefer-dist laravel/laravel expense-tracker
+    cd expense-tracker
+    sudo chown -R $USER:$USER .  # Set correct permissions
+    ```
 
--   **[Vehikl](https://vehikl.com/)**
--   **[Tighten Co.](https://tighten.co)**
--   **[WebReinvent](https://webreinvent.com/)**
--   **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
--   **[64 Robots](https://64robots.com)**
--   **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
--   **[Cyber-Duck](https://cyber-duck.co.uk)**
--   **[DevSquad](https://devsquad.com/hire-laravel-developers)**
--   **[Jump24](https://jump24.co.uk)**
--   **[Redberry](https://redberry.international/laravel/)**
--   **[Active Logic](https://activelogic.com)**
--   **[byte5](https://byte5.de)**
--   **[OP.GG](https://op.gg)**
+3.  **Install Laravel Sail:**
 
-## Contributing
+    ```bash
+    composer require laravel/sail --dev
+    php artisan sail:install  # Select MySQL and Redis
+    ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4.  **Install PestPHP (for testing):**
 
-## Code of Conduct
+    ```bash
+    composer require --dev pestphp/pest:^3.5.2 pestphp/pest-plugin-laravel --with-all-dependencies
+    php artisan pest:install
+    ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+5.  **Start the Docker Environment:**
 
-## Security Vulnerabilities
+    ```bash
+    ./vendor/bin/sail up -d
+    ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    -   Stop Sail: `./vendor/bin/sail down`
+    -   View Logs: `./vendor/bin/sail logs`
+    -   Enter Container: `./vendor/bin/sail shell`
 
-## License
+6.  **Database Migrations and Models:**
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    ```bash
+    ./vendor/bin/sail artisan make:migration create_categories_table --create=categories
+    ./vendor/bin/sail artisan make:migration create_expenses_table --create=expenses
+    ./vendor/bin/sail artisan migrate
 
-## STEPS ADDED TO CREATE THE PROJECT
+    ./vendor/bin/sail artisan make:model Category
+    ./vendor/bin/sail artisan make:model Expense
+    ```
+
+7.  **Controllers:**
+
+    ```bash
+    ./vendor/bin/sail artisan make:controller CategoryController
+    ./vendor/bin/sail artisan make:controller ExpenseController
+    ./vendor/bin/sail artisan make:controller Api/CategoryController --api
+    ./vendor/bin/sail artisan make:controller Api/ExpenseController --api
+    ```
+
+8.  **Policies:**
+
+    ```bash
+    artisan make:policy CategoryPolicy --model=Category
+    artisan make:policy ExpensePolicy --model=Expense
+    ```
+
+9.  **Frontend Dependencies:**
+
+    ```bash
+    npm install axios
+    ```
+
+    ## Usage
+
+10. Access the application in your browser at `http://localhost` (or the appropriate URL provided by Sail).
+11. [Describe the basic workflow of the application, similar to the previous example].
+
+## API Endpoints
+
+(List all the API endpoints and their functionalities, as described in the previous example).
+
+## Database Schema
+
+(Provide a brief description of the main database tables and their columns, as described in the previous example).
+
+## Testing
+
+PestPHP is used for testing. You can run the tests using:
 
 ```bash
-- code to install php:
-sudo add-apt-repository ppa:ondrej/php -y
-sudo apt update
-sudo apt install php8.2 php8.2-cli php8.2-mbstring php8.2-xml php8.2-curl php8.2-zip php8.2-bcmath php8.2-tokenizer php8.2-mysql -y
-sudo update-alternatives --set php /usr/bin/php8.2
-sudo apt install php-intl
-- check php version
-php -v
+./vendor/bin/sail test
 
-- to setup docker env:
-docker run --rm -v $(pwd):/app -w /app laravelsail/php82-composer:latest composer create-project --prefer-dist laravel/laravel expense-tracker
-cd expense-tracker
-sudo chown -R $USER:$USER .
+## Features
 
-- install sail
-composer require laravel/sail --dev
+-   **Expense Management:** Add, edit, and delete expense records with descriptions, amounts, and categories.
+-   **Categorization:** Assign expenses to predefined or custom categories for detailed spending analysis.
+-   **Filtering:** Filter expenses by date range and category to view specific spending patterns.
+-   **Data Visualization:** Interactive charts provide a visual representation of expense distribution across categories.
+-   **Detailed Expense List:** A sortable and searchable table displays all expenses with relevant details.
+-   **API:** A well-defined API allows for interaction with the expense data.
+-   **Security:** Implemented policies for `Category` and `Expense` models to control access.
 
-- publish Sail's docker-compose.yml file:
-php artisan sail:install 
-(selected mysql, redis)
+## Technologies Used
 
-- install phpPest for testing
-composer require --dev pestphp/pest:^3.5.2 pestphp/pest-plugin-laravel --with-all-dependencies
-php artisan pest:install
+-   **Backend:** Laravel 11 (PHP Framework)
+-   **Database:** MySQL
+-   **Caching:** Redis
+-   **Frontend:** jQuery, HTML, CSS
+-   **Testing:** PestPHP
+-   **DevOps:** Docker, Laravel Sail
+-   **Packages:**
+    -   `laravel/sail` (for Docker environment)
+    -   `pestphp/pest` and `pestphp/pest-plugin-laravel` (for testing)
+    -   `axios` (for making HTTP requests from the frontend)
 
-- used this to create the docker env
- ./vendor/bin/sail up -d
-- stop the sail 
-./vendor/bin/sail down
-- logs
-./vendor/bin/sail logs
-- to go inside contianer :
-./vendor/bin/sail shell
+## Development Environment Setup
 
-- creating models & migrate:
-./vendor/bin/sail artisan make:migration create_categories_table --create=categories
-./vendor/bin/sail artisan make:migration create_expenses_table --create=expenses
-./vendor/bin/sail artisan migrate
+(Same as previous example)
 
-./vendor/bin/sail artisan make:model Category
-./vendor/bin/sail artisan make:model Expense
+## Project Structure
 
-- Creating controller:
-./vendor/bin/sail artisan make:controller CategoryController
-./vendor/bin/sail artisan make:controller ExpenseController
+This section outlines the key files and directories in the project:
 
-- installing axios:
-npm install axios
-
-- api
-./vendor/bin/sail artisan make:controller Api/CategoryController --api
- ./vendor/bin/sail artisan make:controller Api/ExpenseController --api
-
-- policy:
-artisan make:policy CategoryPolicy --model=Category
-artisan make:policy ExpensePolicy --model=Expense
-
+-   **Models:**
+    -   `app/Models/Category.php`
+    -   `app/Models/Expense.php`
+-   **Controllers:**
+    -   `app/Http/Controllers/CategoryController.php`
+    -   `app/Http/Controllers/ExpenseController.php`
+    -   `app/Http/Controllers/Api/CategoryController.php`
+    -   `app/Http/Controllers/Api/ExpenseController.php`
+-   **Policies:**
+    -   `app/Policies/CategoryPolicy.php`
+    -   `app/Policies/ExpensePolicy.php`
+-   **Routes:**
+    -   `routes/api.php` (API routes)
+    -   `routes/web.php` (Web routes)
+-   **Frontend Views (Blade):**
+    -   `resources/views/dashboard.blade.php` (Main dashboard view)
+    -   `resources/views/expenses/add.blade.php` (View for adding expenses)
+    -   `resources/views/layouts/app.blade.php` (Layout file)
+    -   (Any other relevant blade files)
+-   **Frontend JavaScript:**
+    -   `resources/js/app.js` (Main JavaScript file)
+    -   `resources/js/components/chart.js` (Chart rendering component)
+    -   `resources/js/components/loading.js` (Loading indicator component)
+-   **Tests:**
+    -   `tests/Feature` (Feature tests)
+    -   `tests/Unit` (Unit tests)
+-   **Configuration:**
+    -   `.env` (Environment variables)
+    -   `config/database.php` (Database configuration)
+    -   `config/cors.php` (CORS Configuration)
 ```
+
+## API Endpoints
+
+The following API endpoints are available (all routes are prefixed with `/api` and require Sanctum authentication unless otherwise noted):
+
+**Category API:**
+
+-   `GET /api/categories`: Retrieves all expense categories.
+-   `POST /api/categories`: Creates a new expense category.
+-   `GET /api/categories/{category}`: Retrieves a specific expense category.
+-   `PUT /api/categories/{category}`: Updates an existing expense category.
+-   `DELETE /api/categories/{category}`: Deletes an expense category.
+
+**Expense API:**
+
+-   `GET /api/expenses`: Retrieves all expenses (optionally filtered by date and category).
+-   `POST /api/expenses`: Creates a new expense.
+-   `GET /api/expenses/{expense}`: Retrieves a specific expense.
+-   `PUT /api/expenses/{expense}`: Updates an existing expense.
+-   `DELETE /api/expenses/{expense}`: Deletes an expense.
+-   `GET /api/expense-summary`: Retrieves a summarized view of expenses, grouped by category.
+
+## Database Schema
+
+The application uses a MySQL database with the following tables:
+
+-   **`users`:** (Standard Laravel users table)
+    -   `id`
+    -   `name`
+    -   `email`
+    -   `password`
+    -   `...` (other default user fields)
+-   **`categories`:**
+    -   `id`
+    -   `name`
+    -   `user_id` (Foreign key referencing the `users` table)
+    -   `created_at`
+    -   `updated_at`
+-   **`expenses`:**
+    -   `id`
+    -   `amount`
+    -   `description`
+    -   `category_id` (Foreign key referencing the `categories` table)
+    -   `user_id` (Foreign key referencing the `users` table)
+    -   `created_at`
+    -   `updated_at`
+
+## Testing
+
+PestPHP is used for testing. You can run the tests using:
+
+```bash
+./vendor/bin/sail test
+```
+
+## Future Enhancements
+
+-   Frontend Improvements: Enhance the user interface and user experience with more interactive components, better form validation, and improved data visualization.
+-   Consider using a more modern JavaScript framework like Vue.js or React for a richer UI.
+-   Advanced Reporting: Implement more sophisticated reporting features, such as generating reports in different formats (PDF, CSV), and providing more detailed analysis of spending habits over time.
+-   Budgeting: Add functionality to set budgets for different categories and track progress against those budgets.
+-   User Roles: Implement user roles (e.g., admin, regular user) with different permissions.
+-   Social Login: Integrate social login providers (e.g., Google, Facebook) for easier user registration.
+-   API Documentation: Create comprehensive API documentation using a tool like Swagger or Postman.
+-   Improved Security: Implement additional security measures, such as input validation and protection against common web vulnerabilities.
+-   Automated Deployment: Set up automated deployment pipelines to streamline the deployment process.
