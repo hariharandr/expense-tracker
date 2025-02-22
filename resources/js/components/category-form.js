@@ -1,68 +1,116 @@
-import axios from 'axios';
+import { showLoading, hideLoading } from './loading';
 import $ from 'jquery';
-import Loading from './loading'; // Import the loading component
+import axios from 'axios';
 
 class CategoryForm {
-    constructor(formSelector) {
-        this.form = $(formSelector);
-        this.loading = new Loading('#loading-indicator');
-        this.form.submit(this.handleSubmit.bind(this));
-        this.isEditing = false; // Initially not editing
-        this.categoryId = null;
+    constructor(formId) {
+        this.form = $(formId);
+        this.form.on('submit', this.handleSubmit.bind(this));
+        this.nameInput = $('#name');
+        this.nameError = $('#name-error');
+        this.categoryListContainer = $('#category-list-container');
+        this.noCategoriesMessage = $('#no-categories');
+        this.errorMessage = $('#error-message');
+        this.categories = [];
+
+        this.fetchCategories();
     }
 
-    setEditMode(categoryId, categoryName) {
-        this.isEditing = true;
-        this.categoryId = categoryId;
-        this.form.find('#name').val(categoryName); // Pre-fill the form
-        this.form.find('#category-form-title').text('Edit Category'); // Change title
-    }
+    fetchCategories() {
+        showLoading(); // Show loading before API call
+        this.errorMessage.addClass('hidden');
 
-    setAddMode() {
-        this.isEditing = false;
-        this.categoryId = null;
-        this.form.find('#name').val(''); // Clear the form
-        this.form.find('#category-form-title').text('Add Category'); // Change title
+        axios.get('/api/categories')
+            .then(response => {
+                this.categories = response.data;
+                hideLoading(); // Hide loading after categories are loaded
+                this.renderCategories();
+            })
+            .catch(error => {
+                console.error("Error fetching categories:", error);
+                this.showError("Failed to load categories.");
+                hideLoading(); // Hide loading even on error
+            });
     }
 
     handleSubmit(event) {
-        console.log("Form submitted! for category name");
         event.preventDefault();
-        this.loading.show();
+        this.resetErrors();
+        const isValid = this.validateForm();
 
-        const data = this.form.serialize();
-        const url = this.isEditing ? `/api/categories/${this.categoryId}` : '/api/categories';
-        const method = this.isEditing ? 'PUT' : 'POST';
+        if (isValid) {
+            showLoading(); // Show loading before API call
+            this.errorMessage.addClass('hidden');
 
-        axios({
-            method: method,
-            url: url,
-            data: data,
-            withCredentials: true,
-            withXSRFToken: true
-        })
-            .then(response => {
-                alert(this.isEditing ? 'Category updated successfully!' : 'Category added successfully!');
-                this.form.trigger('reset');
-                $(document).trigger('categoryUpdated'); // Trigger custom event
-                this.setAddMode(); // Reset to add mode
-            })
-            .catch(error => {
-                console.error("Error submitting category:", error);
-                if (error.response && error.response.data && error.response.data.errors) {
-                    const errors = error.response.data.errors;
-                    for (const key in errors) {
-                        const errorMessages = errors[key].join('<br>');
-                        $(`#${key}-error`).html(errorMessages); // Display error messages
-                    }
-                } else {
-                    alert('An error occurred while submitting the category.');
+            const formData = this.form.serialize();
+
+            axios.post(this.form.attr('action'), formData, {
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json'
                 }
             })
-            .finally(() => {
-                this.loading.hide();
-            });
+                .then(response => {
+                    hideLoading(); // Hide loading after successful API call
+                    this.form[0].reset();
+                    this.fetchCategories();
+                    alert('Category added successfully!');
+                })
+                .catch(error => {
+                    console.error("Error submitting category:", error);
+                    hideLoading(); // Hide loading even on error
+                    const errorMessage = _.get(error, 'response.data.errors', "An error occurred. Please try again.");
+                    this.showError(errorMessage);
+                    if (typeof errorMessage === 'object') {
+                        for (const field in errorMessage) {
+                            const errorElement = $(`#${field}-error`);
+                            if (errorElement) {
+                                errorElement.text(errorMessage[field][0]);
+                            }
+                        }
+                    }
+                });
+        }
+    }
+
+    validateForm() {
+        let isValid = true;
+        const name = this.nameInput.val();
+
+        if (!name) {
+            this.nameError.text("Name is required.");
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    resetErrors() {
+        this.nameError.text("");
+    }
+
+    renderCategories() {
+        this.categoryListContainer.empty();
+        this.noCategoriesMessage.addClass('hidden');
+
+        if (this.categories.length === 0) {
+            this.noCategoriesMessage.removeClass('hidden');
+            return;
+        }
+
+        this.categories.forEach(category => {
+            const categoryItem = $('<div>').addClass('border-b border-gray-200 py-2');
+            const name = $('<span>').text(`Name: ${category.name}`);
+            categoryItem.append(name);
+            this.categoryListContainer.append(categoryItem);
+        });
+    }
+
+    showError(message) {
+        this.errorMessage.removeClass('hidden');
+        const errorMessageText = this.errorMessage.find('p');
+        errorMessageText.text(message);
     }
 }
 
-export default CategoryForm;
+window.CategoryForm = CategoryForm;

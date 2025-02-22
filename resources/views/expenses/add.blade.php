@@ -9,7 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <form id="add-expense-form">
+                    <form id="add-expense-form" action="{{ route('expenses.store') }}" method="POST"> {{-- Add action and method --}}
                         @csrf
 
                         <div class="mb-4">
@@ -49,9 +49,9 @@
         </div>
     </div>
 
-    <div id="loading-indicator" class="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <!-- <div id="loading-indicator" class="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-200 dark:border-gray-600"></div>
-    </div>
+    </div> -->
 
     <div id="error-message" class="fixed top-0 left-0 w-full h-full bg-red-800 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <p class="text-white">An error occurred. Please try again.</p>

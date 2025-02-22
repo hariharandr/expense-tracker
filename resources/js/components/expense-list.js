@@ -1,96 +1,93 @@
-import axios from 'axios';
+import { showLoading, hideLoading } from './loading'; // Import loading functions
 import $ from 'jquery';
-import Loading from './loading';
+import axios from 'axios';
 
-class ExpenseList {
-    constructor(containerSelector) {
-        this.container = $(containerSelector);
-        this.loading = new Loading('#loading-indicator'); // Initialize loading component
+class ExpensesList {
+    constructor() {
+        this.expenseListContainer = $('#expense-list-container');
+        this.noExpensesMessage = $('#no-expenses');
+        this.errorMessage = $('#error-message');
+        this.expenses = [];
+        this.startDateInput = $('#start_date');
+        this.endDateInput = $('#end_date');
+        this.categoryFilter = $('#category_filter');
+        this.applyFilterButton = $('#apply-filter');
+
+        this.populateCategories();
         this.fetchExpenses();
+        this.applyFilterButton.on('click', this.fetchExpenses.bind(this));
     }
 
-    fetchExpenses() {
-        this.loading.show(); // Show loading indicator
-        let start_date = new Date();
-        start_date.setMonth(start_date.getMonth() - 2);
-        console.log("start_date", start_date);
-        let end_date = new Date();
-
-        axios.get('/api/expenses', {
-            params: {
-                // start date from today to 2 months before end date today dynamically should acquire time
-                start_date: start_date,
-                end_date: end_date
-            }
-        })
+    populateCategories() {
+        showLoading();
+        axios.get('/api/categories')
             .then(response => {
-                this.renderExpenses(response.data);
+                const categories = response.data;
+                categories.forEach(category => {
+                    const option = $('<option>', {
+                        value: category.id,
+                        text: category.name
+                    });
+                    this.categoryFilter.append(option);
+                });
+                hideLoading();
             })
             .catch(error => {
-                console.error("Error fetching expenses:", error);
-                this.container.html('<p>Error loading expenses.</p>');
-            })
-            .finally(() => {
-                this.loading.hide(); // Hide loading indicator
+                console.error("Error fetching categories:", error);
+                this.showError("Failed to load categories.");
+                hideLoading();
             });
     }
 
-    renderExpenses(expenses) {
-        this.container.empty(); // Clear existing content
+    fetchExpenses() {
+        showLoading(); // Show loading before API call
+        this.errorMessage.addClass('hidden');
+        const startDate = this.startDateInput.val();
+        const endDate = this.endDateInput.val();
+        const categoryId = this.categoryFilter.val();
 
-        if (expenses.length === 0) {
-            this.container.html('<p>No expenses found.</p>');
+        const params = {};
+        if (startDate) params.start_date = startDate;
+        if (endDate) params.end_date = endDate;
+        if (categoryId) params.category_id = categoryId;
+
+        axios.get('/api/expenses', { params })
+            .then(response => {
+                this.expenses = response.data;
+                hideLoading(); // Hide loading after expenses are loaded
+                this.renderExpenses();
+            })
+            .catch(error => {
+                console.error("Error fetching expenses:", error);
+                this.showError("Failed to load expenses.");
+                hideLoading(); // Hide loading even on error
+            });
+    }
+
+    renderExpenses() {
+        this.expenseListContainer.empty();
+        this.noExpensesMessage.addClass('hidden');
+
+        if (this.expenses.length === 0) {
+            this.noExpensesMessage.removeClass('hidden');
             return;
         }
 
-        const table = $('<table>').addClass('w-full text-sm text-left text-gray-500 dark:text-gray-400');
-        const thead = $('<thead>').addClass('text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400');
-        thead.append('<tr><th class="px-6 py-3">Category</th><th class="px-6 py-3">Amount</th><th class="px-6 py-3">Date</th><th class="px-6 py-3">Actions</th></tr>');
-        table.append(thead);
-
-        const tbody = $('<tbody>').addClass('bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700');
-        expenses.forEach(expense => {
-            console.log("expense", expense);
-            const row = $('<tr>').addClass('hover:bg-gray-10 dark:hover:bg-gray-60');
-            row.append(`<td class="px-6 py-4">${expense.category.name}</td>`);
-            row.append(`<td class="px-6 py-4">${expense.amount}</td>`);
-            row.append(`<td class="px-6 py-4">${expense.expense_date}</td>`);
-
-            // Edit and Delete links
-            const actionsCell = $('<td class="px-6 py-4">');
-            const editLink = $(`<a href="/expenses/${expense.id}/edit" class="text-blue-600 hover:f-5 hover:text-blue-800 mr-2">Edit</a>`); // Added margin-right
-            const deleteLink = $(`<a href="#" class="text-red-600 hover:text-red-800" data-expense-id="${expense.id}">Delete</a>`); // Use data attribute
-
-            deleteLink.click(this.handleDelete.bind(this)); // Bind delete handler
-
-            actionsCell.append(editLink).append(deleteLink);
-            row.append(actionsCell);
-            tbody.append(row);
-
-
+        this.expenses.forEach(expense => {
+            const expenseItem = $('<div>').addClass('border-b border-gray-200 py-2');
+            const amount = $('<span>').text(`Amount: $${expense.amount}`).addClass('mr-4');
+            const description = $('<span>').text(`Description: ${expense.description}`).addClass('mr-4');
+            const category = $('<span>').text(`Category: ${expense.category ? expense.category.name : 'N/A'}`);
+            expenseItem.append(amount, description, category);
+            this.expenseListContainer.append(expenseItem);
         });
-        table.append(tbody);
-        this.container.append(table);
     }
 
-    handleDelete(event) {
-        const expenseId = $(event.target).data('expense-id');
-        if (confirm('Are you sure you want to delete this expense?')) {
-            this.loading.show();
-            axios.delete(`/api/expenses/${expenseId}`)
-                .then(() => {
-                    this.fetchExpenses(); // Refresh the list
-                    alert('Expense deleted successfully.');
-                })
-                .catch(error => {
-                    console.error('Error deleting expense:', error);
-                    alert('Failed to delete expense.');
-                })
-                .finally(() => {
-                    this.loading.hide();
-                });
-        }
+    showError(message) {
+        this.errorMessage.removeClass('hidden');
+        const errorMessageText = this.errorMessage.find('p');
+        errorMessageText.text(message);
     }
 }
 
-export default ExpenseList;
+export default ExpensesList;

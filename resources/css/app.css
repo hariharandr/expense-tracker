@@ -2,19 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-#loading-indicator {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
-}
-
 .hidden {
     display: none;
+}
+
+/* Ensure the table takes full width */
+.table-auto {
+    width: 100%; /* Or min-width: 100% if you want it to shrink below that */
+}
+
+/* Add some spacing to the table cells */
+.table-auto th,
+.table-auto td {
+    padding: 0.75rem 1.5rem; /* Adjust as needed */
+    text-align: left; /* Align text to the left */
+    vertical-align: middle; /* Center content vertically */
+    border-bottom: 1px solid #dee2e6; /* Optional: Add border */
+}
+
+/* Optional: Style the table header */
+.table-auto th {
+    /* background-color: #f8f9fa; Example background color */
+    font-weight: 600;
+}
+
+/* table row contents should be aligned vertically with the headers properly */
+.table-auto tr {
+    vertical-align: middle;
+}
+
+/* tbody should align their content in the middle */
+.table-auto tbody {
+    vertical-align: middle;
+}
+
+/* Responsive adjustments if needed */
+@media (max-width: 768px) {
+    .table-auto {
+        display: block;
+        overflow-x: auto;
+    }
 }

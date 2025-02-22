@@ -117,4 +117,12 @@ php artisan pest:install
 - installing axios:
 npm install axios
 
+- api
+./vendor/bin/sail artisan make:controller Api/CategoryController --api
+ ./vendor/bin/sail artisan make:controller Api/ExpenseController --api
+
+- policy:
+artisan make:policy CategoryPolicy --model=Category
+artisan make:policy ExpensePolicy --model=Expense
+
 ```
